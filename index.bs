@@ -2,9 +2,9 @@
 Title: Web Speech API
 Level:
 Status: CG-DRAFT
-Group: WICG
-URL: https://wicg.github.io/speech-api/
-Repository: WICG/speech-api
+Group: Audio Working Group
+URL: https://webaudio.github.io/web-speech-api/
+Repository: WebAudio/web-speech-api
 Shortname: speech-api
 Editor: André Natal, Mozilla
 Editor: Glen Shires, Google
