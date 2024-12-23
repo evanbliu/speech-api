@@ -1,8 +1,9 @@
 <pre class='metadata'>
 Title: Web Speech API
 Level:
-Status: CG-DRAFT
-Group: Audio Working Group
+Status: WD
+Group: audiowg
+TR:
 URL: https://webaudio.github.io/web-speech-api/
 Repository: WebAudio/web-speech-api
 Shortname: speech-api
