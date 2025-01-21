@@ -328,11 +328,11 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
   The user agent must raise an <a event for=SpeechRecognition>end</a> event once the speech service is no longer connected.
   If the abort method is called on an object which is already stopped or aborting (that is, start was never called on it, the <a event for=SpeechRecognition>end</a> or <a event for=SpeechRecognition>error</a> event has fired on it, or abort was previously called on it), the user agent must ignore the call.</dd>
 
-  <dt><dfn method for=SpeechRecognition>onDeviceWebSpeechAvailable({{DOMString}} lang)</dfn> method</dt>
-  <dd>The onDeviceWebSpeechAvailable method returns a Promise that resolves to a boolean indicating whether on-device speech recognition is available for a given BCP 47 language tag. [[!BCP47]] The method returns true if on-device speech recognition is available for the given BCP 47 language tag and false otherwise.</dd>
+  <dt><dfn method for=SpeechRecognition>availableOnDevice({{DOMString}} lang)</dfn> method</dt>
+  <dd>The availableOnDevice method returns a Promise that resolves to a boolean indicating whether on-device speech recognition is available for a given BCP 47 language tag. [[!BCP47]]</dd>
 
-  <dt><dfn method for=SpeechRecognition>installOnDeviceSpeechRecognition({{DOMString}} lang)</dfn> method</dt>
-  <dd>The installOnDeviceSpeechRecognition method returns a Promise that resolves to a boolean indicating whether the installation of on-device speech recognition for a given BCP 47 language tag initiated successfully. [[!BCP47]] Any website can automatically trigger a download of a new language pack if the user is connected to ethernet/Wifi and the language pack matches the user's preferred language. All sites must prompt the user if they wish to trigger a download over a cellular network or a language pack that does not match the user's preferred language.</dd>
+  <dt><dfn method for=SpeechRecognition>installOnDevice({{DOMString}} lang)</dfn> method</dt>
+  <dd>The installOnDevice method returns a Promise that resolves to a boolean indicating whether the installation of on-device speech recognition for a given BCP 47 language tag initiated successfully. [[!BCP47]]</dd>
 
 </dl>
 
