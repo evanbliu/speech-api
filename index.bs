@@ -244,27 +244,6 @@ dictionary SpeechRecognitionEventInit : EventInit {
     required SpeechRecognitionResultList results;
 };
 
-// The object representing a speech grammar
-[Exposed=Window]
-interface SpeechGrammar {
-    attribute DOMString src;
-    attribute float weight;
-};
-
-// The object representing a speech grammar collection
-[Exposed=Window]
-interface SpeechGrammarList {
-    constructor();
-    readonly attribute unsigned long length;
-    getter SpeechGrammar item(unsigned long index);
-    undefined addFromURI(DOMString src,
-                    optional float weight = 1.0);
-    undefined addFromString(DOMString string,
-                    optional float weight = 1.0);
-};
-</xmp>
-
-
 <h4 id="speechreco-attributes">SpeechRecognition Attributes</h4>
 
 <dl>
