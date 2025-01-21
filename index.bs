@@ -119,8 +119,6 @@ This does not preclude adding support for this as a future API enhancement, and 
   </li>
 
   <li>The user agent may also give the user a longer explanation the first time speech input is used, to let the user know what it is and how they can tune their privacy settings to disable speech recording if required.</li>
-
-  <li>To reduce the risk of fingerprinting, user agents must obtain explicit and informed user consent before installing on-device speech recognition languages that differ from the user's preferred language or when the user is not connected to an Ethernet or Wi-Fi network.</li>
 </ol>
 
 <h3 id="implementation-considerations">Implementation considerations</h3>
