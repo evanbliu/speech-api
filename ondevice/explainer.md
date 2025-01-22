@@ -38,7 +38,7 @@ SpeechRecognition.onDeviceWebSpeechAvailable(lang).then((available) => {
 });
 ```
 
-### 2. `installOnDeviceSpeechRecognition()`
+### 2. `Promise<boolean> installOnDeviceSpeechRecognition()`
 This method initiates the installation of resources required for on-device speech recognition. The installation process may download and configure necessary language models.
 
 #### Example Usage
@@ -57,8 +57,8 @@ The `mode` attribute in the `SpeechRecognition` interface defines how speech rec
 
 #### `SpeechRecognitionMode` Enum
 
-- **"ondevice-preferred"**: Use on-device speech recognition if available. If not, fall back to cloud-based speech recognition.
-- **"ondevice-only"**: Only use on-device speech recognition. If it's unavailable, throw an error.
+- **"on-device-preferred"**: Use on-device speech recognition if available. If not, fall back to cloud-based speech recognition.
+- **"on-device-only"**: Only use on-device speech recognition. If it's unavailable, throw an error.
 - **"cloud-only"**: Only use cloud-based speech recognition, bypassing on-device options entirely.
 
 #### Example Usage
