@@ -38,7 +38,7 @@ SpeechRecognition.onDeviceWebSpeechAvailable(lang).then((available) => {
 });
 ```
 
-### 2. `installOnDeviceSpeechRecognition()`
+### 2. `Promise<boolean> installOnDeviceSpeechRecognition()`
 This method initiates the installation of resources required for on-device speech recognition. The installation process may download and configure necessary language models.
 
 #### Example Usage
