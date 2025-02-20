@@ -322,26 +322,26 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 
   <dt><dfn method for=SpeechRecognition>availableOnDevice({{DOMString}} lang)</dfn> method</dt>
   <dd>
-    The availableOnDevice method returns a Promise that resolves to a {{AvailabilityStatus}} indicating the on-device speech recognition availability for a given [[!BCP47]] language tag.
+    The {{SpeechRecognition/availableOnDevice}} method returns a {{Promise}} that resolves to a {{AvailabilityStatus}} indicating the on-device speech recognition availability for a given [[!BCP47]] language tag.
 
     When invoked, run these steps:
     1. Let <var>promise</var> be <a>a new promise</a>.
-    1. Return <var>promise</var> and perform the remaining steps in parallel:
-    1. Run the <a>on-device availability algorithm</a> with <var>lang</var> and resolve <var>promise</var> with the result of the algorithm.
+    1. Run the <a>on-device availability algorithm</a> with <var>lang</var>. If it returns an exception, throw it and abort these steps.
+    1. Return <var>promise</var> and resolve it with the result of the <a>on-device availability algorithm</a>.
   </dd>
 
   <dt><dfn method for=SpeechRecognition>installOnDevice({{DOMString}} lang)</dfn> method</dt>
   <dd>
-    The installOnDevice method returns a Promise that resolves to a boolean indicating whether the installation of on-device speech recognition for a given [[!BCP47]] language tag initiated successfully.
+    The {{SpeechRecognition/installOnDevice}} method returns a {{Promise}} that resolves to a {{boolean}} indicating whether the installation of on-device speech recognition for a given [[!BCP47]] language tag initiated successfully.
 
     When invoked, run these steps:
     1. Let <var>promise</var> be <a>a new promise</a>.
-    1. Return <var>promise</var> and perform the remaining steps in parallel:
-    1. Run the <a>on-device availability algorithm</a> with <var>lang</var>.
+    1. Run the <a>on-device availability algorithm</a> with <var>lang</var>. If it returns an exception, throw it and abort these steps.
+    1. Return <var>promise</var>.
     1. If the <a>on-device availability algorithm</a> returns {{AvailabilityStatus/unavailable}}, {{AvailabilityStatus/downloading}}, or {{AvailabilityStatus/available}}, resolve <var>promise</var> with <code>false</code> and skip the rest of these steps.
     1. Initiate the download of the on-device speech recognition language for <var>lang</var>.
         <p class=note>
-          Note: The user agent may prompt the user for explicit permission to download the on-device speech recognition language pack.
+          Note: The user agent can prompt the user for explicit permission to download the on-device speech recognition language pack.
         </p>
     1. If the initiation of the download succeeds, resolve <var>promise</var> with <code>true</code>, otherwise resolve it with <code>false</code>.
   </dd>
@@ -350,10 +350,11 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 <p>When the  <dfn>on-device availability algorithm</dfn> with <var>lang</var> is invoked, the user agent MUST run the following steps:
 1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], throw an {{InvalidStateError}} and abort these steps.
 1. If <var>lang</var> is not a valid [[!BCP47]] language tag, throw a {{SyntaxError}} and abort these steps.
-1. If the on-device speech recognition language pack for <var>lang</var> is unsupported, return {{AvailabilityStatus/unavailable}}.
-1. If the on-device speech recognition language pack for <var>lang</var> is supported but not installed, return {{AvailabilityStatus/downloadable}}.
-1. If the on-device speech recognition language pack for <var>lang</var> is downloading, return {{AvailabilityStatus/downloading}}.
-1. If the on-device speech recognition language pack for <var>lang</var> is installed, return {{AvailabilityStatus/available}}.
+1. In parallel, do the following steps:
+    - If the on-device speech recognition language pack for <var>lang</var> is unsupported, return {{AvailabilityStatus/unavailable}}.
+    - If the on-device speech recognition language pack for <var>lang</var> is supported but not installed, return {{AvailabilityStatus/downloadable}}.
+    - If the on-device speech recognition language pack for <var>lang</var> is downloading, return {{AvailabilityStatus/downloading}}.
+    - If the on-device speech recognition language pack for <var>lang</var> is installed, return {{AvailabilityStatus/available}}.
 
 <p>When the <dfn>start session algorithm</dfn> with <var>requestMicrophonePermission</var> is invoked, the user agent MUST run the following steps:
 
