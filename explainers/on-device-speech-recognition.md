@@ -24,7 +24,7 @@ Applications can offer speech recognition capabilities even without an active in
 ## New Methods
 
 ### 1. `Promise<boolean> availableOnDevice(DOMString lang)`
-This method checks if on-device speech recognition is available for a specific language. Developers can use this to determine whether to enable on-device features or fall back to cloud-based recognition.
+This method checks if on-device speech recognition is available for a specific language. Developers can use this to determine whether to enable features that require on-device speech recognition.
 
 #### Example Usage
 ```javascript
@@ -38,13 +38,13 @@ SpeechRecognition.availableOnDevice(lang).then((available) => {
 });
 ```
 
-### 2. `Promise<boolean> installOnDevice()`
-This method install the resources required for on-device speech recognition. The installation process may download and configure necessary language models.
+### 2. `Promise<boolean> installOnDevice(DOMString[] lang)`
+This method install the resources required for on-device speech recognition for the given BCP-47 language codes. The installation process may download and configure necessary language models.
 
 #### Example Usage
 ```javascript
 const lang = 'en-US';
-SpeechRecognition.installOnDevice(lang).then((success) => {
+SpeechRecognition.installOnDevice([lang]).then((success) => {
     if (success) {
         console.log('On-device speech recognition resources installed successfully.');
     } else {
@@ -62,7 +62,6 @@ The `mode` attribute in the `SpeechRecognition` interface defines how speech rec
 
 - **"on-device-preferred"**: Use on-device speech recognition if available. If not, fall back to cloud-based speech recognition.
 - **"on-device-only"**: Only use on-device speech recognition. If it's unavailable, throw an error.
-- **"cloud-only"**: Only use cloud-based speech recognition, bypassing on-device options entirely.
 
 #### Example Usage
 ```javascript
@@ -72,8 +71,7 @@ recognition.start();
 ```
 
 ## Privacy considerations
-To reduce the risk of fingerprinting, user agents must obtain explicit and informed user consent before installing on-device speech recognition languages that differ from the user's preferred language or when the user is not connected to an Ethernet or Wi-Fi network.
+To reduce the risk of fingerprinting, user agents must implementing privacy-preserving countermeasures. The Web Speech API will employ the same masking techniques used by the [Web Translation API](https://github.com/webmachinelearning/writing-assistance-apis/pull/47).
 
 ## Conclusion
-
 The addition of on-device speech recognition capabilities to the Web Speech API marks a significant step forward in creating more private, performant, and accessible web applications. By leveraging these new methods, developers can enhance user experiences while addressing key concerns around privacy and connectivity.
