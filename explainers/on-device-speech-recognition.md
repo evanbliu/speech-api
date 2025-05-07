@@ -21,10 +21,20 @@ Local processing reduces latency, providing a smoother and faster user experienc
 ### 3. **Offline Functionality**
 Applications can offer speech recognition capabilities even without an active internet connection, increasing their utility in remote or low-connectivity environments.
 
+## Example use cases
+### 1. Company with data residency requirements
+Websites with strict data residency requirements (i.e., regulatory, legal, or company policy) can ensure that audio data remains on the user's device and is not sent over the network for processing. This is particularly crucial for compliance with regulations like GDPR, which considers voice as personally identifiable information (PII) as voice recordings can reveal information about an individual's gender, ethnic origin, or even potential health conditions. On-device processing significantly enhances user privacy by minimizing the exposure of sensitive voice data.
+
+### 2. Video conferencing service with strict performance requirements (e.g. meet.google.com)
+Some websites would only adopt the Web Speech API if it meets strict performance requirements. On-device speech recognition may provide better accuracy and latency as well as provide additional features (e.g. contextual biasing) that may not be available by the cloud-based service used by the user agent. In the event on-device speech recognition is not available, these websites may elect to use an alternative cloud-based speech recognition provider that meet these requirements instead of the default one provided by the user agent.
+
+### 3. Educational website (e.g. khanacademy.org)
+Applications that need to function in unreliable or offline network conditions—such as voice-based productivity tools, educational software, or accessibility features—benefit from on-device speech recognition. This enables uninterrupted functionality during flights, remote travel, or in areas with limited connectivity. When on-device recognition is unavailable, a website can choose to hide the UI or gracefully degrade functionality to maintain a coherent user experience.
+
 ## New Methods
 
 ### 1. `Promise<boolean> availableOnDevice(DOMString lang)`
-This method checks if on-device speech recognition is available for a specific language. Developers can use this to determine whether to enable on-device features or fall back to cloud-based recognition.
+This method checks if on-device speech recognition is available for a specific language. Developers can use this to determine whether to enable features that require on-device speech recognition.
 
 #### Example Usage
 ```javascript
@@ -38,13 +48,13 @@ SpeechRecognition.availableOnDevice(lang).then((available) => {
 });
 ```
 
-### 2. `Promise<boolean> installOnDevice()`
-This method install the resources required for on-device speech recognition. The installation process may download and configure necessary language models.
+### 2. `Promise<boolean> installOnDevice(DOMString[] lang)`
+This method install the resources required for on-device speech recognition for the given BCP-47 language codes. The installation process may download and configure necessary language models.
 
 #### Example Usage
 ```javascript
 const lang = 'en-US';
-SpeechRecognition.installOnDevice(lang).then((success) => {
+SpeechRecognition.installOnDevice([lang]).then((success) => {
     if (success) {
         console.log('On-device speech recognition resources installed successfully.');
     } else {
@@ -62,7 +72,6 @@ The `mode` attribute in the `SpeechRecognition` interface defines how speech rec
 
 - **"on-device-preferred"**: Use on-device speech recognition if available. If not, fall back to cloud-based speech recognition.
 - **"on-device-only"**: Only use on-device speech recognition. If it's unavailable, throw an error.
-- **"cloud-only"**: Only use cloud-based speech recognition, bypassing on-device options entirely.
 
 #### Example Usage
 ```javascript
@@ -72,8 +81,7 @@ recognition.start();
 ```
 
 ## Privacy considerations
-To reduce the risk of fingerprinting, user agents must obtain explicit and informed user consent before installing on-device speech recognition languages that differ from the user's preferred language or when the user is not connected to an Ethernet or Wi-Fi network.
+To reduce the risk of fingerprinting, user agents must implementing privacy-preserving countermeasures. The Web Speech API will employ the same masking techniques used by the [Web Translation API](https://github.com/webmachinelearning/writing-assistance-apis/pull/47).
 
 ## Conclusion
-
 The addition of on-device speech recognition capabilities to the Web Speech API marks a significant step forward in creating more private, performant, and accessible web applications. By leveraging these new methods, developers can enhance user experiences while addressing key concerns around privacy and connectivity.
