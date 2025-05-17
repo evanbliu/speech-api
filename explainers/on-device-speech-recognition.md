@@ -51,6 +51,16 @@ recognition.options = {
 recognition.start();
 ```
 
+## Example use cases
+### 1. Company with data residency requirements
+Websites with strict data residency requirements (i.e., regulatory, legal, or company policy) can ensure that audio data remains on the user's device and is not sent over the network for processing. This is particularly crucial for compliance with regulations like GDPR, which considers voice as personally identifiable information (PII) as voice recordings can reveal information about an individual's gender, ethnic origin, or even potential health conditions. On-device processing significantly enhances user privacy by minimizing the exposure of sensitive voice data.
+
+### 2. Video conferencing service with strict performance requirements (e.g. meet.google.com)
+Some websites would only adopt the Web Speech API if it meets strict performance requirements. On-device speech recognition may provide better accuracy and latency as well as provide additional features (e.g. contextual biasing) that may not be available by the cloud-based service used by the user agent. In the event on-device speech recognition is not available, these websites may elect to use an alternative cloud-based speech recognition provider that meet these requirements instead of the default one provided by the user agent.
+
+### 3. Educational website (e.g. khanacademy.org)
+Applications that need to function in unreliable or offline network conditions—such as voice-based productivity tools, educational software, or accessibility features—benefit from on-device speech recognition. This enables uninterrupted functionality during flights, remote travel, or in areas with limited connectivity. When on-device recognition is unavailable, a website can choose to hide the UI or gracefully degrade functionality to maintain a coherent user experience.
+
 ## New Methods
 
 ### 1. `static Promise<AvailabilityStatus> SpeechRecognition.available(SpeechRecognitionOptions options)`
