@@ -22,7 +22,24 @@ Local processing reduces latency, providing a smoother and faster user experienc
 Applications can offer speech recognition capabilities even without an active internet connection, increasing their utility in remote or low-connectivity environments.
 ## New API Members
 
-This enhancement introduces new members to the Web Speech API to support on-device recognition: a dictionary for configuration, an instance attribute, and static methods for managing capabilities.
+This enhancement introduces new members to the Web Speech API to support on-device recognition:
+
+*   An instance attribute `processLocally` on the `SpeechRecognition` object to control processing for individual recognition sessions.
+*   A `SpeechRecognitionOptions` dictionary used for querying and installing on-device capabilities.
+*   Static methods `SpeechRecognition.available()` and `SpeechRecognition.install()` for managing these capabilities.
+
+### Controlling On-Device Processing for a Session
+
+To instruct a specific speech recognition session to be performed on-device, the `processLocally` attribute on the `SpeechRecognition` instance is used.
+
+- `SpeechRecognition.processLocally` (`boolean`): When set to `true`, it mandates that the recognition for this particular session occurs on the user's device. If `false` (the default), the user agent can select any available recognition method (local or cloud-based).
+
+#### Example: Requesting On-Device for a Single Session
+```javascript
+const recognition = new SpeechRecognition();
+recognition.processLocally = true; // Instruct this session to run on-device
+recognition.start();
+```
 
 ### `SpeechRecognitionOptions` Dictionary
 
@@ -30,25 +47,12 @@ This dictionary is used to configure speech recognition preferences, both for in
 
 It includes the following members:
 
-- `langs`: A required sequence of `DOMString` representing BCP-47 language tags (e.g., `['en-US']`).
 - `processLocally`: A boolean that, if `true`, instructs the recognition to be performed on-device. If `false` (the default), any available recognition method (cloud-based or on-device) may be used.
-
 
 ```idl
 dictionary SpeechRecognitionOptions {
-  required sequence<DOMString> langs; // BCP-47 language tags
   boolean processLocally = false;  // Instructs the recognition to be performed on-device. If `false` (default), any available recognition method may be used.
 };
-```
-
-#### Example Usage
-```javascript
-const recognition = new SpeechRecognition();
-recognition.options = {
-  langs: ['en-US'],
-  processLocally: true
-};
-recognition.start();
 ```
 
 ## Example use cases
@@ -106,7 +110,6 @@ SpeechRecognition.install(options).then((success) => {
     }
 });
 ```
-
 
 ## Privacy considerations
 To reduce the risk of fingerprinting, user agents must implement privacy-preserving countermeasures. The Web Speech API will employ the same masking techniques used by the [Web Translation API](https://github.com/webmachinelearning/writing-assistance-apis/pull/47).
