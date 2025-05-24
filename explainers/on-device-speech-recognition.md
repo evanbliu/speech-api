@@ -22,22 +22,31 @@ Local processing reduces latency, providing a smoother and faster user experienc
 Applications can offer speech recognition capabilities even without an active internet connection, increasing their utility in remote or low-connectivity environments.
 ## New API Members
 
-This enhancement introduces new members to the Web Speech API to support on-device recognition: a dictionary for configuration, an instance attribute, and static methods for managing capabilities.
+This enhancement introduces new members to the Web Speech API to support on-device recognition:
+
+* An instance attribute `processLocally` on `SpeechRecognition` to control processing for an individual recognition session.
+* A `SpeechRecognitionOptions` dictionary used to configure sessions and to query or install on-device capabilities.
+* Static methods `SpeechRecognition.available()` and `SpeechRecognition.install()` for managing these capabilities.
+
+### Controlling On-Device Processing for a Session
+
+Set `SpeechRecognition.processLocally` to `true` to require recognition for that session to run on the user's device. When it is `false` (the default), the user agent may use any available recognition method.
+
+#### Example: Requesting On-Device for a Single Session
+```javascript
+const recognition = new SpeechRecognition();
+recognition.processLocally = true;
+recognition.start();
+```
 
 ### `SpeechRecognitionOptions` Dictionary
 
-This dictionary is used to configure speech recognition preferences, both for individual sessions and for querying or installing capabilities.
-
-It includes the following members:
-
-- `langs`: A required sequence of `DOMString` representing BCP-47 language tags (e.g., `['en-US']`).
-- `processLocally`: A boolean that, if `true`, instructs the recognition to be performed on-device. If `false` (the default), any available recognition method (cloud-based or on-device) may be used.
-
+This dictionary configures speech recognition preferences for sessions and for querying or installing capabilities. It includes a required sequence of BCP-47 language tags and an optional `processLocally` flag.
 
 ```idl
 dictionary SpeechRecognitionOptions {
   required sequence<DOMString> langs; // BCP-47 language tags
-  boolean processLocally = false;  // Instructs the recognition to be performed on-device. If `false` (default), any available recognition method may be used.
+  boolean processLocally = false;
 };
 ```
 
@@ -61,7 +70,7 @@ Some websites would only adopt the Web Speech API if it meets strict performance
 ### 3. Educational website (e.g. khanacademy.org)
 Applications that need to function in unreliable or offline network conditions—such as voice-based productivity tools, educational software, or accessibility features—benefit from on-device speech recognition. This enables uninterrupted functionality during flights, remote travel, or in areas with limited connectivity. When on-device recognition is unavailable, a website can choose to hide the UI or gracefully degrade functionality to maintain a coherent user experience.
 
-## New Methods
+## New API Components
 
 ### 1. `static Promise<AvailabilityStatus> SpeechRecognition.available(SpeechRecognitionOptions options)`
 This static method checks the availability of speech recognition capabilities matching the provided `SpeechRecognitionOptions`.
@@ -107,6 +116,25 @@ SpeechRecognition.install(options).then((success) => {
 });
 ```
 
+## Supported languages
+The availability of on-device speech recognition languages is user-agent dependent. As an example, Google Chrome supports the following languages for on-device recognition:
+* de-DE (German, Germany)
+* en-US (English, United States)
+* es-ES (Spanish, Spain)
+* fr-FR (French, France)
+* hi-IN (Hindi, India)
+* id-ID (Indonesian, Indonesia)
+* it-IT (Italian, Italy)
+* ja-JP (Japanese, Japan)
+* ko-KR (Korean, South Korea)
+* pl-PL (Polish, Poland)
+* pt-BR (Portuguese, Brazil)
+* ru-RU (Russian, Russia)
+* th-TH (Thai, Thailand)
+* tr-TR (Turkish, Turkey)
+* vi-VN (Vietnamese, Vietnam)
+* zh-CN (Chinese, Mandarin, Simplified)
+* zh-TW (Chinese, Mandarin, Traditional)
 
 ## Privacy considerations
 To reduce the risk of fingerprinting, user agents must implement privacy-preserving countermeasures. The Web Speech API will employ the same masking techniques used by the [Web Translation API](https://github.com/webmachinelearning/writing-assistance-apis/pull/47).
