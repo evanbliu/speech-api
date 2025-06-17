@@ -45,6 +45,9 @@ Complain about:accidental-2119 yes, missing-example-ids yes
   }
 }
 </pre>
+<pre class=link-defaults>
+spec:storage; type:dfn; text:storage key
+</pre>
 
 <h2 id=introduction>Introduction</h2>
 
