@@ -163,7 +163,7 @@ The term "interim result" indicates a {{SpeechRecognitionResult}} in which the {
 <dl dfn-type=attribute dfn-for="SpeechRecognition">
     : <dfn>[[phrases]]</dfn>
     ::
-        A sequence of {{SpeechRecognitionPhrase}} representing a list of phrases for contextual biasing. The initial value is an empty sequence.
+        An {{ObservableArray}} of {{SpeechRecognitionPhrase}} objects representing a list of phrases for contextual biasing. The initial value is a new empty {{ObservableArray}}.
 </dl>
 
 <xmp class="idl">
@@ -178,7 +178,7 @@ interface SpeechRecognition : EventTarget {
     attribute boolean interimResults;
     attribute unsigned long maxAlternatives;
     attribute boolean processLocally;
-    attribute sequence<SpeechRecognitionPhrase> phrases;
+    attribute ObservableArray<SpeechRecognitionPhrase> phrases;
 
     // methods to drive the speech interaction
     undefined start();
@@ -337,17 +337,10 @@ interface SpeechRecognitionPhrase {
 
   <dt><dfn attribute for=SpeechRecognition>phrases</dfn> attribute</dt>
   <dd>
-    This attribute represents a list of phrases for contextual biasing.
+    The `phrases` attribute provides a list of {{SpeechRecognitionPhrase}} objects to be used for contextual biasing. This is an {{ObservableArray}}, which can be modified like a JavaScript `Array` (e.g., using `push()`).
   </dd>
   <dd>
     The getter steps are to return the value of {{SpeechRecognition/[[phrases]]}}.
-  </dd>
-  <dd>
-    The setter steps are:
-    1. If the size of the given value is greater than 0 and the system does not support contextual biasing,
-        throw a {{SpeechRecognitionErrorEvent}} with the {{phrases-not-supported}} error code and abort these steps.
-    1. Set {{SpeechRecognition/[[phrases]]}} to the given value.
-    1. Send a copy of {{SpeechRecognition/[[phrases]]}} to the system for initializing or updating the phrases for contextual biasing implementation.
   </dd>
 </dl>
 
@@ -496,6 +489,9 @@ following steps:
 1. If {{SpeechRecognition/[[started]]}} is `true` and no <a event
     for=SpeechRecognition>error</a> event or <a event for=SpeechRecognition>end</a> event
     has fired on it, throw an {{InvalidStateError}} and abort these steps.
+1. If this.{{SpeechRecognition/phrases}}'s `length` is greater than 0 and the user agent does not support contextual biasing:
+    1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to `phrases-not-supported` and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
+    1. Abort these steps.
 1. If this.{{SpeechRecognition/[[processLocally]]}} is `true`:
     1. If the user agent determines that local speech recognition is not available for this.{{SpeechRecognition/lang}}, or if it cannot fulfill the local processing requirement for other reasons:
         1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to {{SpeechRecognitionErrorCode/service-not-allowed}} and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
