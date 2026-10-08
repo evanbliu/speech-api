@@ -268,7 +268,7 @@ The term "interim result" indicates a {{SpeechRecognitionResult}} in which the {
 <dl dfn-type=attribute dfn-for="SpeechRecognition">
     : <dfn>[[phrases]]</dfn>
     ::
-        A {{SpeechRecognitionPhraseList}} representing a list of phrases for contextual biasing. The initial value is null.
+        An {{ObservableArray}} of {{SpeechRecognitionPhrase}} objects representing a list of phrases for contextual biasing. The initial value is a new empty {{ObservableArray}}.
 </dl>
 
 <xmp class="idl">
@@ -281,9 +281,10 @@ interface SpeechRecognition : EventTarget {
     attribute DOMString lang;
     attribute boolean continuous;
     attribute boolean interimResults;
+    attribute boolean unspokenPunctuation;
     attribute unsigned long maxAlternatives;
     attribute boolean processLocally;
-    attribute SpeechRecognitionPhraseList phrases;
+    attribute ObservableArray<SpeechRecognitionPhrase> phrases;
 
     // methods to drive the speech interaction
     undefined start();
@@ -307,9 +308,16 @@ interface SpeechRecognition : EventTarget {
     attribute EventHandler onend;
 };
 
+enum SpeechRecognitionQuality {
+  "command",
+  "dictation",
+  "conversation"
+};
+
 dictionary SpeechRecognitionOptions {
   required sequence<DOMString> langs;
   boolean processLocally = false;
+  SpeechRecognitionQuality quality = "command";
 };
 
 enum SpeechRecognitionErrorCode {
@@ -353,7 +361,7 @@ interface SpeechRecognitionAlternative {
 [SecureContext, Exposed=Window]
 interface SpeechRecognitionResult {
     readonly attribute unsigned long length;
-    getter SpeechRecognitionAlternative item(unsigned long index);
+    getter SpeechRecognitionAlternative? item(unsigned long index);
     readonly attribute boolean isFinal;
 };
 
@@ -361,7 +369,7 @@ interface SpeechRecognitionResult {
 [SecureContext, Exposed=Window]
 interface SpeechRecognitionResultList {
     readonly attribute unsigned long length;
-    getter SpeechRecognitionResult item(unsigned long index);
+    getter SpeechRecognitionResult? item(unsigned long index);
 };
 
 // A full response, which could be interim or final, part of a continuous response or not
@@ -389,8 +397,8 @@ interface SpeechGrammar {
 interface SpeechGrammarList {
     constructor();
     readonly attribute unsigned long length;
-    getter SpeechGrammar item(unsigned long index);
-    undefined addFromURI(DOMString src,
+    getter SpeechGrammar? item(unsigned long index);
+    undefined addFromUri(DOMString src,
                     optional float weight = 1.0);
     undefined addFromString(DOMString string,
                     optional float weight = 1.0);
@@ -402,16 +410,6 @@ interface SpeechRecognitionPhrase {
     constructor(DOMString phrase, optional float boost = 1.0);
     readonly attribute DOMString phrase;
     readonly attribute float boost;
-};
-
-// The object representing a list of phrases for contextual biasing.
-[SecureContext, Exposed=Window]
-interface SpeechRecognitionPhraseList {
-    constructor(sequence<SpeechRecognitionPhrase> phrases);
-    readonly attribute unsigned long length;
-    SpeechRecognitionPhrase item(unsigned long index);
-    undefined addItem(SpeechRecognitionPhrase item);
-    undefined removeItem(unsigned long index);
 };
 </xmp>
 
@@ -440,6 +438,10 @@ interface SpeechRecognitionPhraseList {
   When set to false, interim results must not be returned.
   The default value must be false. Note, this attribute setting does not affect final results.</dd>
 
+  <dt><dfn attribute for=SpeechRecognition>unspokenPunctuation</dfn> attribute</dt>
+  <dd>This attribute controls whether the speech recognition engine automatically infers and inserts punctuation marks (such as periods, commas, and question marks) based on natural pauses, grammatical structure, and prosody, without requiring the user to explicitly speak the punctuation commands.
+  The default value must be false.</dd>
+
   <dt><dfn attribute for=SpeechRecognition>maxAlternatives</dfn> attribute</dt>
   <dd>This attribute will set the maximum number of {{SpeechRecognitionAlternative}}s per result.
   The default value is 1.</dd>
@@ -452,17 +454,10 @@ interface SpeechRecognitionPhraseList {
 
   <dt><dfn attribute for=SpeechRecognition>phrases</dfn> attribute</dt>
   <dd>
-    This attribute represents a list of phrases for contextual biasing.
+    The `phrases` attribute provides a list of {{SpeechRecognitionPhrase}} objects to be used for contextual biasing. This is an {{ObservableArray}}, which can be modified like a JavaScript `Array` (e.g., using `push()`).
   </dd>
   <dd>
     The getter steps are to return the value of {{SpeechRecognition/[[phrases]]}}.
-  </dd>
-  <dd>
-    The setter steps are:
-    1. If the {{SpeechRecognitionPhraseList/length}} of the given value is greater than 0 and the system does not support contextual biasing,
-        throw a {{SpeechRecognitionErrorEvent}} with the {{phrases-not-supported}} error code and abort these steps.
-    1. Set {{SpeechRecognition/[[phrases]]}} to the given value.
-    1. Send a copy of {{SpeechRecognition/[[phrases]]}} to the system for initializing or updating the phrases for contextual biasing implementation.
   </dd>
 </dl>
 
@@ -511,34 +506,37 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 
   <dt><dfn method for=SpeechRecognition>available({{SpeechRecognitionOptions}} options)</dfn> method</dt>
   <dd>
-    The {{SpeechRecognition/available}} method returns a {{Promise}} that resolves to a {{AvailabilityStatus}} indicating the recognition availability matching the {{SpeechRecognitionOptions}} argument.
+    The {{SpeechRecognition/available}} method returns a {{Promise}} that resolves to a {{AvailabilityStatus}} indicating the recognition availability matching the {{SpeechRecognitionOptions}} argument, including the requested {{SpeechRecognitionOptions/quality}} level.
     Access to this method is gated behind the [=policy-controlled feature=] "on-device-speech-recognition", which has a [=policy-controlled feature/default allowlist=] of <code>[=default allowlist/'self'=]</code>.
 
     When invoked, run these steps:
     1. Let <var>promise</var> be <a>a new promise</a>.
-    1. Run the <a>availability algorithm</a> with <var>options</var> and <var>promise</var>. If it returns an exception, throw it and abort these steps.
+    1. Run the <a>availability algorithm</a> with <var>options</var> and <var>promise</var>.
     1. Return <var>promise</var>.
   </dd>
 
   <dt><dfn method for=SpeechRecognition>install({{SpeechRecognitionOptions}} options)</dfn> method</dt>
   <dd>
-    The {{SpeechRecognition/install}} method attempts to install speech recognition language packs for all languages specified in `options.langs`.
+    The {{SpeechRecognition/install}} method attempts to install speech recognition language packs for all languages specified in `options.langs` matching the requested {{SpeechRecognitionOptions/quality}} level floor.
     It returns a {{Promise}} that resolves to a {{boolean}}.
     The promise resolves to `true` when all installation attempts for requested and supported languages succeed (or the languages were already installed).
     The promise resolves to `false` if `options.langs` is empty, if not all of the requested languages are supported, or if any installation attempt for a supported language fails.
     Access to this method is gated behind the [=policy-controlled feature=] "on-device-speech-recognition", which has a [=policy-controlled feature/default allowlist=] of <code>[=default allowlist/'self'=]</code>.
 
     When invoked, run these steps:
-    1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], throw an {{InvalidStateError}} and abort these steps.
-    1. If any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is not a valid [[!BCP47]] language tag, throw a {{SyntaxError}} and abort these steps.
-    1. If the on-device speech recognition language pack for any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is unsupported, return a resolved {{Promise}} with false and skip the rest of these steps.
     1. Let <var>promise</var> be <a>a new promise</a>.
-    1. For each <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var>, initiate the download of the on-device speech recognition language for <var>lang</var>.
-        <p class=note>
-          Note: The user agent can prompt the user for explicit permission to download the on-device speech recognition language pack.
-        </p>
-    1. [=Queue a task=] on the [=relevant global object=]'s [=task queue=] to run the following step:
-        - When the download of all languages specified by {{SpeechRecognitionOptions/langs}} of <var>options</var> succeeds, resolve <var>promise</var> with <code>true</code>, otherwise resolve it with <code>false</code>.
+    1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], reject <var>promise</var> with an {{InvalidStateError}}, abort these steps, returning <var>promise</var>.
+    1. If any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is not a valid [[!BCP47]] language tag, reject <var>promise</var> with a {{SyntaxError}}, abort these steps, returning <var>promise</var>.
+    1. If {{SpeechRecognitionOptions/langs}} of <var>options</var> is an empty sequence, resolve <var>promise</var> with <code>false</code>, abort these steps, returning <var>promise</var>.
+    1. If the on-device speech recognition language pack for any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is unsupported, resolve <var>promise</var> with <code>false</code>, abort these steps, returning <var>promise</var>.
+    1. [=In parallel=], run the following steps:
+        1. For each <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var>, initiate the download of the on-device speech recognition language pack for <var>lang</var> matching the requested {{SpeechRecognitionOptions/quality}} level floor.
+            <p class=note>
+              Note: The user agent can prompt the user for explicit permission to download the on-device speech recognition language pack.
+            </p>
+        1. Wait for the download of all languages specified by {{SpeechRecognitionOptions/langs}} of <var>options</var> to either succeed or fail.
+        1. If the download of all those languages succeeded, let <var>result</var> be <code>true</code>, otherwise let <var>result</var> be <code>false</code>.
+        1. [=Queue a task=] on the [=relevant global object=]'s [=task queue=] to resolve <var>promise</var> with <var>result</var>.
             <p class="note">
               Note: The <code>false</code> resolution of the Promise does not indicate the specific cause of failure. User agents are encouraged to provide more detailed information about the failure in developer tools console messages. However, this detailed error information is not exposed to the script.
             </p>
@@ -570,10 +568,23 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
   If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is false, it means recognition (which could be local or remote) is available.</dd>
 </dl>
 
+<h4 id="speech-recognition-quality-values">SpeechRecognitionQuality Enum Values</h4>
+<p>The {{SpeechRecognitionQuality}} enum indicates the semantic capability and quality level floor requested for the speech recognition model. Its values are:</p>
+<dl>
+  <dt><dfn enum-value for="SpeechRecognitionQuality">"command"</dfn></dt>
+  <dd>Level 1: Short phrases, single speaker, limited vocabulary (e.g., voice commands for smart home or simple apps).</dd>
+
+  <dt><dfn enum-value for="SpeechRecognitionQuality">"dictation"</dfn></dt>
+  <dd>Level 2: Continuous speech, moderate background noise, single primary speaker (e.g., long-form text input like SMS/Email).</dd>
+
+  <dt><dfn enum-value for="SpeechRecognitionQuality">"conversation"</dfn></dt>
+  <dd>Level 3: Multi-speaker, complex vocabulary, high noise tolerance (e.g., meeting transcripts and continuous captioning).</dd>
+</dl>
+
 <p>When the  <dfn>availability algorithm</dfn> with <var>options</var> and <var>promise</var> is invoked, the user agent MUST run the following steps:
-1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], throw an {{InvalidStateError}} and abort these steps.
+1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], reject <var>promise</var> with an {{InvalidStateError}} and abort these steps.
 1. Let <var>langs</var> be {{SpeechRecognitionOptions/langs}} of <var>options</var>.
-1. If any <var>lang</var> in <var>langs</var> is not a valid [[!BCP47]] language tag, throw a {{SyntaxError}} and abort these steps.
+1. If any <var>lang</var> in <var>langs</var> is not a valid [[!BCP47]] language tag, reject <var>promise</var> with a {{SyntaxError}} and abort these steps.
 1. If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is `false`:
     1. If <var>langs</var> is an empty sequence, let <var>status</var> be {{AvailabilityStatus/unavailable}}.
     1. Else if speech recognition (which may be remote) is available for all <var>language</var> in <var>langs</var>, let <var>status</var> be {{AvailabilityStatus/available}}.
@@ -611,14 +622,18 @@ following steps:
 1. If {{SpeechRecognition/[[started]]}} is `true` and no <a event
     for=SpeechRecognition>error</a> event or <a event for=SpeechRecognition>end</a> event
     has fired on it, throw an {{InvalidStateError}} and abort these steps.
+1. If this.{{SpeechRecognition/phrases}}'s `length` is greater than 0 and the user agent does not support contextual biasing:
+    1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to `phrases-not-supported` and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
+    1. Abort these steps.
 1. If this.{{SpeechRecognition/[[processLocally]]}} is `true`:
     1. If the user agent determines that local speech recognition is not available for this.{{SpeechRecognition/lang}}, or if it cannot fulfill the local processing requirement for other reasons:
         1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to {{SpeechRecognitionErrorCode/service-not-allowed}} and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
         1. Abort these steps.
 1. Set {{[[started]]}} to `true`.
 1. If |requestMicrophonePermission| is `true` and [=request
-    permission to use=] "`microphone`" is [=permission/"denied"=], abort
-    these steps.
+    permission to use=] "`microphone`" is [=permission/"denied"=]:
+    1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to {{SpeechRecognitionErrorCode/not-allowed}} and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
+    1. Abort these steps.
 1. Once the system is successfully listening to the recognition, queue a task to
     [=fire an event=] named <a event for=SpeechRecognition>start</a> at [=this=].
 
@@ -832,59 +847,6 @@ For a non-continuous recognition it will hold only a single value.</p>
   <dd>This attribute returns the value of {{[[boost]]}}.</dd>
 </dl>
 
-<h4 id="speechreco-phraselist">SpeechRecognitionPhraseList</h4>
-
-<p>The SpeechRecognitionPhraseList object holds a list of phrases for contextual biasing and has the following internal slot:</p>
-
-<dl dfn-type=attribute dfn-for="SpeechRecognitionPhraseList">
-    : <dfn>[[phrases]]</dfn>
-    ::
-        A list of {{SpeechRecognitionPhrase}} representing the phrases to be boosted. The initial value is an empty list.
-</dl>
-
-<dl>
-  <dt><dfn constructor for=SpeechRecognitionPhraseList>SpeechRecognitionPhraseList(|phrases|)</dfn> constructor</dt>
-  <dd>
-    When this constructor is invoked, run the following steps:
-    1. Let |list| be a new object of type {{SpeechRecognitionPhraseList}}.
-    1. Set |list|.{{SpeechRecognitionPhraseList/[[phrases]]}} to be the value of |phrases|.
-    1. Return |list|.
-  </dd>
-
-  <dt><dfn attribute for=SpeechRecognitionPhraseList>length</dfn> attribute</dt>
-  <dd>
-    This attribute indicates the number of phrases in the list.
-    When invoked, return the number of items in {{SpeechRecognitionPhraseList/[[phrases]]}}.
-  </dd>
-
-  <dt><dfn method for=SpeechRecognitionPhraseList>item(|index|)</dfn> method</dt>
-  <dd>
-    This method gets the {{SpeechRecognitionPhrase}} object at the |index| of the list.
-    When invoked, run the following steps:
-    1. If |index| is smaller than 0, or greater than or equal to {{SpeechRecognitionPhraseList/length}},
-        throw a {{RangeError}} and abort these steps.
-    1. Return the {{SpeechRecognitionPhrase}} at the |index| of {{SpeechRecognitionPhraseList/[[phrases]]}}.
-  </dd>
-
-  <dt><dfn method for=SpeechRecognitionPhraseList>addItem(|item|)</dfn> method</dt>
-  <dd>
-    This method adds the {{SpeechRecognitionPhrase}} object |item| to the list.
-    When invoked, add |item| to the end of {{SpeechRecognitionPhraseList/[[phrases]]}}.
-    The list is allowed to have multiple {{SpeechRecognitionPhrase}} objects with the same {{SpeechRecognitionPhrase/[[phrase]]}} value,
-    and the speech recognition model should use the last {{SpeechRecognitionPhrase/[[boost]]}} value
-    for this {{SpeechRecognitionPhrase/[[phrase]]}} in the list.
-  </dd>
-
-  <dt><dfn method for=SpeechRecognitionPhraseList>removeItem(|index|)</dfn> method</dt>
-  <dd>
-    This method removes the {{SpeechRecognitionPhrase}} object at the |index| of the list.
-    When invoked, run the following steps:
-    1. If |index| is smaller than 0, or greater than or equal to {{SpeechRecognitionPhraseList/length}},
-        throw a {{RangeError}} and abort these steps.
-    1. Remove the {{SpeechRecognitionPhrase}} object at the |index| of {{SpeechRecognitionPhraseList/[[phrases]]}}.
-  </dd>
-</dl>
-
 <h4 id="speechreco-speechgrammar">SpeechGrammar</h4>
 
 <p>The SpeechGrammar object represents a container for a grammar.</p>
@@ -912,7 +874,7 @@ This structure has the following attributes:</p>
   <dd>The length attribute represents how many grammars are currently in the array.</dd>
 
   <dt><dfn method for=SpeechGrammarList>item(<var>index</var>)</dfn> getter</dt>
-  <dd>The item getter returns a SpeechGrammar from the index into an array of grammars.
+  <dd>The item getter returns the SpeechGrammar at <var>index</var> in the array of grammars, or null if <var>index</var> is greater than or equal to the length attribute.
   The user agent must ensure that the length attribute is set to the number of elements in the array.
   The user agent must ensure that the index order from smallest to largest matches the order in which grammars were added to the array.</dd>
 
