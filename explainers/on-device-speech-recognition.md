@@ -22,22 +22,31 @@ Local processing reduces latency, providing a smoother and faster user experienc
 Applications can offer speech recognition capabilities even without an active internet connection, increasing their utility in remote or low-connectivity environments.
 ## New API Members
 
-This enhancement introduces new members to the Web Speech API to support on-device recognition: a dictionary for configuration, an instance attribute, and static methods for managing capabilities.
+This enhancement introduces new members to the Web Speech API to support on-device recognition:
+
+* An instance attribute `processLocally` on `SpeechRecognition` to control processing for an individual recognition session.
+* A `SpeechRecognitionOptions` dictionary used to configure sessions and to query or install on-device capabilities.
+* Static methods `SpeechRecognition.available()` and `SpeechRecognition.install()` for managing these capabilities.
+
+### Controlling On-Device Processing for a Session
+
+Set `SpeechRecognition.processLocally` to `true` to require recognition for that session to run on the user's device. When it is `false` (the default), the user agent may use any available recognition method.
+
+#### Example: Requesting On-Device for a Single Session
+```javascript
+const recognition = new SpeechRecognition();
+recognition.processLocally = true;
+recognition.start();
+```
 
 ### `SpeechRecognitionOptions` Dictionary
 
-This dictionary is used to configure speech recognition preferences, both for individual sessions and for querying or installing capabilities.
-
-It includes the following members:
-
-- `langs`: A required sequence of `DOMString` representing BCP-47 language tags (e.g., `['en-US']`).
-- `processLocally`: A boolean that, if `true`, instructs the recognition to be performed on-device. If `false` (the default), any available recognition method (cloud-based or on-device) may be used.
-
+This dictionary configures speech recognition preferences for sessions and for querying or installing capabilities. It includes a required sequence of BCP-47 language tags and an optional `processLocally` flag.
 
 ```idl
 dictionary SpeechRecognitionOptions {
   required sequence<DOMString> langs; // BCP-47 language tags
-  boolean processLocally = false;  // Instructs the recognition to be performed on-device. If `false` (default), any available recognition method may be used.
+  boolean processLocally = false;
 };
 ```
 
