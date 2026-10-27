@@ -293,7 +293,7 @@ interface SpeechRecognition : EventTarget {
     undefined start(MediaStreamTrack audioTrack);
     undefined stop();
     undefined abort();
-    static Promise<AvailabilityStatus> available(SpeechRecognitionOptions options);
+    static Promise<SpeechRecognitionAvailabilityStatus> available(SpeechRecognitionOptions options);
     static Promise<boolean> install(SpeechRecognitionOptions options);
 
     // event methods
@@ -333,7 +333,7 @@ enum SpeechRecognitionErrorCode {
     "phrases-not-supported"
 };
 
-enum AvailabilityStatus {
+enum SpeechRecognitionAvailabilityStatus {
     "unavailable",
     "downloadable",
     "downloading",
@@ -365,6 +365,8 @@ interface SpeechRecognitionResult {
     readonly attribute unsigned long length;
     getter SpeechRecognitionAlternative? item(unsigned long index);
     readonly attribute boolean isFinal;
+    readonly attribute double speechStartTime;
+    readonly attribute double speechEndTime;
 };
 
 // A collection of responses (used in continuous mode)
@@ -483,7 +485,7 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
     Start the speech recognition process, directly from a microphone on the device.
     When invoked, run the following steps:
 
-    1. Let |requestMicrophonePermission| be a boolan variable set to to `true`.
+    1. Let |requestMicrophonePermission| be a boolean variable set to `true`.
     1. Run the [=start session algorithm=] with |requestMicrophonePermission|.
   </dd>
 
@@ -498,7 +500,7 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
     1. If |audioTrack|'s {{MediaStreamTrack/readyState}} attribute is NOT
         `"live"`, throw an {{InvalidStateError}} and abort these steps.
     1. Let |requestMicrophonePermission| be `false`.
-    1. Run the [=start session algorithm=] with |requestMicrophonePermission|.
+    1. Run the [=start session algorithm=] with |requestMicrophonePermission| and |audioTrack|.
   </dd>
 
   <dt><dfn method for=SpeechRecognition>stop()</dfn> method</dt>
@@ -517,7 +519,7 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 
   <dt><dfn method for=SpeechRecognition>available({{SpeechRecognitionOptions}} options)</dfn> method</dt>
   <dd>
-    The {{SpeechRecognition/available}} method returns a {{Promise}} that resolves to a {{AvailabilityStatus}} indicating the recognition availability matching the {{SpeechRecognitionOptions}} argument, including the requested {{SpeechRecognitionOptions/quality}} level.
+    The {{SpeechRecognition/available}} method returns a {{Promise}} that resolves to a {{SpeechRecognitionAvailabilityStatus}} indicating the recognition availability matching the {{SpeechRecognitionOptions}} argument, including the requested {{SpeechRecognitionOptions/quality}} level.
     Access to this method is gated behind the [=policy-controlled feature=] "on-device-speech-recognition", which has a [=policy-controlled feature/default allowlist=] of <code>[=default allowlist/'self'=]</code>.
 
     <p id="req-download-masking">
@@ -548,8 +550,8 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
     When invoked, run these steps:
     1. Let <var>promise</var> be <a>a new promise</a>.
     1. If the [=current settings object=]'s [=relevant global object=]'s [=associated Document=] is NOT [=fully active=], reject <var>promise</var> with an {{InvalidStateError}}, abort these steps, returning <var>promise</var>.
-    1. If any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is not a valid [[!BCP47]] language tag, reject <var>promise</var> with a {{SyntaxError}}, abort these steps, returning <var>promise</var>.
     1. If {{SpeechRecognitionOptions/langs}} of <var>options</var> is an empty sequence, resolve <var>promise</var> with <code>false</code>, abort these steps, returning <var>promise</var>.
+    1. If any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is not a valid [[!BCP47]] language tag, reject <var>promise</var> with a {{SyntaxError}}, abort these steps, returning <var>promise</var>.
     1. If the on-device speech recognition language pack for any <var>lang</var> in {{SpeechRecognitionOptions/langs}} of <var>options</var> is unsupported, resolve <var>promise</var> with <code>false</code>, abort these steps, returning <var>promise</var>.
     1. <span id="step-install-transient-activation"></span>If {{SpeechRecognition/available()}} would resolve to {{"downloadable"}} for <var>options</var> (evaluated as if {{SpeechRecognitionOptions/processLocally}} of <var>options</var> were <code>true</code>), that is, if, as far as the calling web page can observe, this call would initiate a download, then:
         1. If the [=current settings object=]'s [=relevant global object=] does not have [=transient activation=], reject <var>promise</var> with a {{NotAllowedError}}, abort these steps, returning <var>promise</var>.
@@ -584,21 +586,21 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 
 </dl>
 
-<h4 id="availability-status-values">AvailabilityStatus Enum Values</h4>
-<p>The {{AvailabilityStatus}} enum indicates the availability of speech recognition capabilities. Its values are:</p>
+<h4 id="availability-status-values">SpeechRecognitionAvailabilityStatus Enum Values</h4>
+<p>The {{SpeechRecognitionAvailabilityStatus}} enum indicates the availability of speech recognition capabilities. Its values are:</p>
 <dl>
-  <dt><dfn enum-value for="AvailabilityStatus">"unavailable"</dfn></dt>
+  <dt><dfn enum-value for="SpeechRecognitionAvailabilityStatus">"unavailable"</dfn></dt>
   <dd>Indicates that speech recognition is not available for the specified language(s) and processing preference.
   If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is `true`, this means on-device recognition for the language is not supported by the user agent.
   If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is `false`, it means neither local nor remote recognition is available for at least one of the specified languages.</dd>
 
-  <dt><dfn enum-value for="AvailabilityStatus">"downloadable"</dfn></dt>
+  <dt><dfn enum-value for="SpeechRecognitionAvailabilityStatus">"downloadable"</dfn></dt>
   <dd>Indicates that on-device speech recognition for the specified language(s) is supported by the user agent but not yet installed. It can potentially be installed using the {{SpeechRecognition/install()}} method. This status is primarily relevant when {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is true.</dd>
 
-  <dt><dfn enum-value for="AvailabilityStatus">"downloading"</dfn></dt>
+  <dt><dfn enum-value for="SpeechRecognitionAvailabilityStatus">"downloading"</dfn></dt>
   <dd>Indicates that on-device speech recognition for the specified language(s) is currently in the process of being downloaded. This status is primarily relevant when {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is true.</dd>
 
-  <dt><dfn enum-value for="AvailabilityStatus">"available"</dfn></dt>
+  <dt><dfn enum-value for="SpeechRecognitionAvailabilityStatus">"available"</dfn></dt>
   <dd>Indicates that speech recognition is available for all specified language(s) and the given processing preference.
   If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is true, this means on-device recognition is installed and ready.
   If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is false, it means recognition (which could be local or remote) is available.</dd>
@@ -622,24 +624,24 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
 1. Let <var>langs</var> be {{SpeechRecognitionOptions/langs}} of <var>options</var>.
 1. If any <var>lang</var> in <var>langs</var> is not a valid [[!BCP47]] language tag, reject <var>promise</var> with a {{SyntaxError}} and abort these steps.
 1. If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is `false`:
-    1. If <var>langs</var> is an empty sequence, let <var>status</var> be {{AvailabilityStatus/unavailable}}.
-    1. Else if speech recognition (which may be remote, or on-device if its [=download masking state=] is "unmasked" for the caller's [=storage key=]) is available for all <var>language</var> in <var>langs</var>, let <var>status</var> be {{AvailabilityStatus/available}}.
-    1. Else, let <var>status</var> be {{AvailabilityStatus/unavailable}}.
+    1. If <var>langs</var> is an empty sequence, let <var>status</var> be {{SpeechRecognitionAvailabilityStatus/unavailable}}.
+    1. Else if speech recognition (which may be remote, or on-device if its [=download masking state=] is "unmasked" for the caller's [=storage key=]) is available for all <var>language</var> in <var>langs</var>, let <var>status</var> be {{SpeechRecognitionAvailabilityStatus/available}}.
+    1. Else, let <var>status</var> be {{SpeechRecognitionAvailabilityStatus/unavailable}}.
 1. If {{SpeechRecognitionOptions/processLocally}} of <var>options</var> is `true`:
       <ol type=a>
-        <li>If <var>langs</var> is an empty sequence, let <var>status</var> be {{AvailabilityStatus/unavailable}}.</li>
+        <li>If <var>langs</var> is an empty sequence, let <var>status</var> be {{SpeechRecognitionAvailabilityStatus/unavailable}}.</li>
         <li>Else:
           <ol type=i>
-            <li>Let <var>finalStatus</var> be {{AvailabilityStatus/available}}.</li>
+            <li>Let <var>finalStatus</var> be {{SpeechRecognitionAvailabilityStatus/available}}.</li>
             <li>For each <var>language</var> in <var>langs</var>:
               <ol>
                 <li>Let <var>currentLanguageStatus</var>.</li>
-                <li>If on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is installed (taking into account <a href="#req-model-version">model version limits</a>) and no fake download is in progress for the caller's [=storage key=] per <a href="#step-install-fake-download">the `install()` algorithm</a>, set <var>currentLanguageStatus</var> to {{AvailabilityStatus/available}}.</li>
-                <li>Else if on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is currently being downloaded (including a fake download for the caller's [=storage key=] per <a href="#step-install-fake-download">the `install()` algorithm</a>), set <var>currentLanguageStatus</var> to {{AvailabilityStatus/downloading}}.</li>
-                <li>Else if on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is supported by the user agent but not yet installed, set <var>currentLanguageStatus</var> to {{AvailabilityStatus/downloadable}}.</li>
-                <li>Else (on-device speech recognition for <var>language</var> is not supported), set <var>currentLanguageStatus</var> to {{AvailabilityStatus/unavailable}}.</li>
-                <li><span id="step-availability-masking"></span>If <var>currentLanguageStatus</var> is {{AvailabilityStatus/available}} or {{AvailabilityStatus/downloading}}, and the [=download masking state=] for (<var>options</var>, [=storage key=]) is not "unmasked" for <var>language</var>, set <var>currentLanguageStatus</var> to {{AvailabilityStatus/downloadable}}.</li>
-                <li>If <var>currentLanguageStatus</var> comes after <var>finalStatus</var> in the ordered list `[{{AvailabilityStatus/available}}, {{AvailabilityStatus/downloading}}, {{AvailabilityStatus/downloadable}}, {{AvailabilityStatus/unavailable}}]`, set <var>finalStatus</var> to <var>currentLanguageStatus</var>.</li>
+                <li>If on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is installed (taking into account <a href="#req-model-version">model version limits</a>) and no fake download is in progress for the caller's [=storage key=] per <a href="#step-install-fake-download">the `install()` algorithm</a>, set <var>currentLanguageStatus</var> to {{SpeechRecognitionAvailabilityStatus/available}}.</li>
+                <li>Else if on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is currently being downloaded (including a fake download for the caller's [=storage key=] per <a href="#step-install-fake-download">the `install()` algorithm</a>), set <var>currentLanguageStatus</var> to {{SpeechRecognitionAvailabilityStatus/downloading}}.</li>
+                <li>Else if on-device speech recognition for <var>language</var> matching the requested {{SpeechRecognitionOptions/quality}} of <var>options</var> is supported by the user agent but not yet installed, set <var>currentLanguageStatus</var> to {{SpeechRecognitionAvailabilityStatus/downloadable}}.</li>
+                <li>Else (on-device speech recognition for <var>language</var> is not supported), set <var>currentLanguageStatus</var> to {{SpeechRecognitionAvailabilityStatus/unavailable}}.</li>
+                <li><span id="step-availability-masking"></span>If <var>currentLanguageStatus</var> is {{SpeechRecognitionAvailabilityStatus/available}} or {{SpeechRecognitionAvailabilityStatus/downloading}}, and the [=download masking state=] for (<var>options</var>, [=storage key=]) is not "unmasked" for <var>language</var>, set <var>currentLanguageStatus</var> to {{SpeechRecognitionAvailabilityStatus/downloadable}}.</li>
+                <li>If <var>currentLanguageStatus</var> comes after <var>finalStatus</var> in the ordered list `[{{SpeechRecognitionAvailabilityStatus/available}}, {{SpeechRecognitionAvailabilityStatus/downloading}}, {{SpeechRecognitionAvailabilityStatus/downloadable}}, {{SpeechRecognitionAvailabilityStatus/unavailable}}]`, set <var>finalStatus</var> to <var>currentLanguageStatus</var>.</li>
               </ol>
             </li>
             <li>Let <var>status</var> be <var>finalStatus</var>.</li>
@@ -650,7 +652,7 @@ See <a href="https://lists.w3.org/Archives/Public/public-speech-api/2012Sep/0072
     - Resolve <var>promise</var> with <var>status</var>.
 
 When the <dfn>start session algorithm</dfn> with
-|requestMicrophonePermission| is invoked, the user agent MUST run the
+|requestMicrophonePermission| and |audioTrack| (if provided) is invoked, the user agent MUST run the
 following steps:
 
 1. If the [=current settings object=]'s [=relevant global object=]'s
@@ -671,6 +673,8 @@ following steps:
     permission to use=] "`microphone`" is [=permission/"denied"=]:
     1. [=Queue a task=] to [=fire an event=] named <a event for=SpeechRecognition>error</a> at [=this=] using {{SpeechRecognitionErrorEvent}} with its {{SpeechRecognitionErrorEvent/error}} attribute initialized to {{SpeechRecognitionErrorCode/not-allowed}} and its {{SpeechRecognitionErrorEvent/message}} attribute set to an implementation-defined string detailing the reason.
     1. Abort these steps.
+1. Begin consuming audio from the audio source (the {{MediaStreamTrack}} if one was provided, or the microphone otherwise), buffering frames if the recognition service is not yet ready.
+    This establishes the recognition session's <dfn>session audio timeline</dfn>, which measures elapsed audio duration in seconds starting at `0.0` at the first audio frame consumed and advancing with the duration of each subsequent audio frame consumed.
 1. Once the system is successfully listening to the recognition, queue a task to
     [=fire an event=] named <a event for=SpeechRecognition>start</a> at [=this=].
 
@@ -815,7 +819,19 @@ For example, some implementations may fire <a event for=SpeechRecognition>audioe
   <dt><dfn attribute for=SpeechRecognitionResult>isFinal</dfn> attribute</dt>
   <dd>The final boolean must be set to true if this is the final time the speech service will return this particular index value.
   If the value is false, then this represents an interim result that could still be changed.</dd>
+
+  <dt><dfn attribute for=SpeechRecognitionResult>speechStartTime</dfn> attribute</dt>
+  <dd>A {{double}} representing the start of the speech segment corresponding to this recognition result, as an offset in seconds on the [=session audio timeline=].</dd>
+
+  <dt><dfn attribute for=SpeechRecognitionResult>speechEndTime</dfn> attribute</dt>
+  <dd>A {{double}} representing the end of the speech segment corresponding to this recognition result, as an offset in seconds on the [=session audio timeline=].</dd>
 </dl>
+
+<p class=note>
+  {{SpeechRecognitionResult/speechStartTime}} and {{SpeechRecognitionResult/speechEndTime}} are offsets on the [=session audio timeline=], not readings of a system clock.
+  They are therefore unaffected by audio output latency or by drift between an audio device clock and the system clock, and are identical whether recognition runs in real time or faster than real time.
+  Their precision is implementation-defined.
+</p>
 
 <h4 id="speechreco-resultlist">SpeechRecognitionResultList</h4>
 
@@ -1082,7 +1098,7 @@ interface SpeechSynthesisVoice {
   <dt><dfn method for=SpeechSynthesis>getVoices()</dfn> method</dt>
   <dd>This method returns the available voices.
   It is user agent dependent which voices are available.
-  If there are no voices available, or if the the list of available voices is not yet known (for example: server-side synthesis where the list is determined asynchronously),
+  If there are no voices available, or if the list of available voices is not yet known (for example: server-side synthesis where the list is determined asynchronously),
   then this method must return a SpeechSynthesisVoiceList of length zero.</dd>
 </dl>
 
